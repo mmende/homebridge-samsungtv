@@ -24,11 +24,13 @@ function SamsungTvAccessory(log, config) {
 	this.name = config["name"];
 	this.ip_address = config["ip_address"];
 	this.send_delay = config["send_delay"] || 400;
+	this.host = config["host"] || null;
 
 	if (!this.ip_address) throw new Error("You must provide a config value for 'ip_address'.");
 
 	this.remote = new SamsungRemote({
-		ip: this.ip_address // required: IP address of your Samsung Smart TV
+		ip: this.ip_address, // required: IP address of your Samsung Smart TV
+		host: { ip: "127.0.0.1", mac: "11:00:AA:EE:BB:22", name: "HomeBridge" }
 	});
 
 	this.isSendingSequence = false;
