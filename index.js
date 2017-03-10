@@ -48,7 +48,7 @@ function SamsungTvAccessory(log, config) {
 		.on('set', this._setOn.bind(this));
 
 	this.service
-		.addCharacteristic(VolumeCharacteristic)
+		.addCharacteristic(Characteristic.Volume)
 		.on('get', this._getVolume.bind(this))
 		.on('set', this._setVolume.bind(this));
 
