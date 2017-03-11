@@ -18,7 +18,8 @@ Example config.json:
 			"accessory": "SamsungTV",
 			"name": "TV Living room",
 			"ip_address": "192.168.1.2",
-            "send_delay": 400
+            "send_delay": 400,
+            "atv_address": "apple-tv.local",
 		}
 	],
 ```
@@ -31,6 +32,7 @@ Field           | Description
 **name**        | The name you want to use to control the TV.
 **ip_address**  | The internal ip address of your samsung TV.
 **send_delay**   | When switching to another channel the individual keys will be send with a short delay (in ms) between them. (default 400)
+**atv_address**  | The internal ip address of your Apple TV, if you have one.
 
 ## Usage
 
@@ -45,6 +47,10 @@ The last characteristic allows sending any key from [this list](https://github.c
 The volume, channel and key characteristics send single keys with a short delay between them to accomplish their task. Therefore to set these characteristics values you should set up a scene with the desired value in the corresponding characteristics so that not every single change will be send before you've finished typing.  
 Since some Samsung TV's will disconnect from the network when turned off it is not possible to turn them back on again over network.
 Furthermore it is not possible to observe current values such as the volume or the channel. Therefore only channel changes that where made through this plugin will be tracked (channel changes with the regular remote for example can not be tracked).
+
+## Apple TV:
+
+For older models (2010), the "turn on" functionality is not working, so if you have an Apple TV plugged on your CEC Samsung TV, you can turn on the TV by playing a short Airplay movie to your Apple TV.
 
 ### Newer Samsung TV's (from 2014)
 
