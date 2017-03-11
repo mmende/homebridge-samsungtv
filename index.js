@@ -39,6 +39,7 @@ function SamsungTvAccessory(log, config) {
 	this.name = config["name"];
 	this.ip_address = config["ip_address"];
 	this.send_delay = config["send_delay"] || 400;
+	this.atv_address = config["atv_address"];
 
 	if (!this.ip_address) throw new Error("You must provide a config value for 'ip_address'.");
 
@@ -108,15 +109,44 @@ SamsungTvAccessory.prototype._setOn = function(on, callback) {
 	var accessory = this;
 	var cb = DisposableCallback(callback)
 	if (on) {
-		this.remote.send('KEY_POWERON', function(err) {
-			if (err) {
-				accessory.log.debug('Could not turn TV on: %s', err);
-				cb(new Error(err));
-			} else {
-				accessory.log.debug('TV successfully turnen on');
-				cb(null);
-			}
-		});
+		if (!this.atv_address){
+			this.remote.send('KEY_POWERON', function(err) {
+				if (err) {
+					accessory.log.debug('Could not turn TV on: %s', err);
+					cb(new Error(err));
+				} else {
+					accessory.log.debug('TV successfully turnen on');
+					cb(null);
+				}
+			});
+		}else{
+			var net = require('net');
+			var client = new net.Socket();
+			client.connect(7000, this.atv_address, function() {
+				accessory.log.debug('Connected to Apple TV');
+				client.write('POST /play HTTP/1.1\r\n');
+				client.write('Content-Length: 92\r\n');
+				client.write('User-Agent: MediaControl/1.0\r\n\r\n');
+				client.write('Content-Location: https://github.com/fafoulon/video/raw/master/black.mp4\r\n');
+				client.write('Start-Position: 0\r\n');
+			});
+
+			client.on('data', function(data) {
+				if(data.indexOf('200 OK') > -1) {
+					accessory.log.debug('Code 200 Received');
+					setTimeout(function(){ client.destroy(); }, 3000);
+					cb(null);
+				}else{
+					accessory.log.debug('Error with Data received: ' + data);
+					client.destroy();
+					cb(new Error('Error from Apple TV'));
+				}
+			});
+
+			client.on('close', function() {
+				accessory.log.debug('Connection with Apple TV closed');
+			});
+		}
 	} else {
 		this.remote.send('KEY_POWEROFF', function(err) {
 			if (err) {
