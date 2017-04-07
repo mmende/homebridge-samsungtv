@@ -21,13 +21,13 @@ function SamsungTvAccessory(log, config) {
 	this.log = log;
 	this.config = config;
 	this.name = config["name"];
-	this.ip_address = config["ip_address"];
+	this.ip_address = config["ip_address"] || '0.0.0.0';
 	this.send_delay = config["send_delay"] || 400;
 	this.host = config["host"] || null;
 	this.volume = config["defaultVolume"] || 50;
 	this.volume = Math.min(Math.max(this.volume, 100), 0);
 
-	if (!this.ip_address) throw new Error("You must provide a config value for 'ip_address'.");
+	if (this.ip_address == '0.0.0.0') this.log('Auto discover TV with UPnP');
 
 	this.remote = new SamsungRemote({
 		ip: this.ip_address, // required: IP address of your Samsung Smart TV
@@ -62,6 +62,13 @@ function SamsungTvAccessory(log, config) {
 		.addCharacteristic(KeyCharacteristic)
 		.on('get', this._getKey.bind(this))
 		.on('set', this._setKey.bind(this));
+	
+	if(this.remote.availability) {
+		var that = this;
+		this.remote.availability.on('change', function(available) {
+			that.service.getCharacteristic(Characteristic.On).updateValue(available ? 1 : 0)
+		});
+	}
 }
 
 SamsungTvAccessory.prototype.getInformationService = function() {
