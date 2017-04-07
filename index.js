@@ -7,7 +7,6 @@ module.exports = function(homebridge) {
 	Characteristic = homebridge.hap.Characteristic;
 
 	// we can only do this after we receive the homebridge API object
-	makeVolumeCharacteristic();
 	makeChannelCharacteristic();
 	makeKeyCharacteristic();
 
@@ -25,6 +24,8 @@ function SamsungTvAccessory(log, config) {
 	this.ip_address = config["ip_address"];
 	this.send_delay = config["send_delay"] || 400;
 	this.host = config["host"] || null;
+	this.volume = config["defaultVolume"] || 50;
+	this.volume = Math.min(Math.max(this.volume, 100), 0);
 
 	if (!this.ip_address) throw new Error("You must provide a config value for 'ip_address'.");
 
@@ -49,8 +50,8 @@ function SamsungTvAccessory(log, config) {
 
 	this.service
 		.addCharacteristic(Characteristic.Volume)
-		.on('get', this._getVolume.bind(this))
-		.on('set', this._setVolume.bind(this));
+		.on('set', this._setVolume.bind(this))
+		.updateValue(this.volume);
 
 	this.service
 		.addCharacteristic(ChannelCharacteristic)
@@ -117,12 +118,6 @@ SamsungTvAccessory.prototype._setOn = function(on, callback) {
 	}
 };
 
-SamsungTvAccessory.prototype._getVolume = function(callback) {
-	var accessory = this;
-
-	callback(null, 25);
-};
-
 SamsungTvAccessory.prototype._setVolume = function(volume, callback) {
 	var accessory = this;
 
@@ -149,11 +144,11 @@ SamsungTvAccessory.prototype._setVolume = function(volume, callback) {
 		});
 		return;
 	}
+	
+	this.log.debug('Changing volume to %s. Current is %s', volume, accessory.volume);
 
-	this.log.debug('Changing volume by %s.', volume);
-
-	var volumeKey = volume > 0 ? 'KEY_VOLUP' : 'KEY_VOLDOWN';
-	var absVolume = Math.abs(volume);
+	var volumeKey = volume > accessory.volume ? 'KEY_VOLUP' : 'KEY_VOLDOWN';
+	var absVolume = Math.abs(volume-accessory.volume);
 
 	function sendKey(index) {
 		if (index > 0) {
@@ -171,7 +166,8 @@ SamsungTvAccessory.prototype._setVolume = function(volume, callback) {
 			});
 			return;
 		}
-		accessory.log.debug('Finished changing volume by %s.', volume);
+		accessory.log.debug('Finished changing volume to %s.', volume);
+		accessory.volume = volume;
 		accessory.isSendingSequence = false;
 		callback(null);
 	}
@@ -269,30 +265,6 @@ SamsungTvAccessory.prototype._setKey = function(key, callback) {
 		callback(null);
 	});
 };
-
-/**
- * Custom characteristic for volume
- *
- * @return {Characteristic} The volume characteristic
- */
-function makeVolumeCharacteristic() {
-
-	VolumeCharacteristic = function() {
-		Characteristic.call(this, 'Volume', '91288267-5678-49B2-8D22-F57BE995AA00');
-		this.setProps({
-			format: Characteristic.Formats.INT,
-			unit: Characteristic.Units.PERCENTAGE,
-			maxValue: 10,
-			minValue: -10,
-			minStep: 1,
-			perms: [Characteristic.Perms.READ, Characteristic.Perms.WRITE, Characteristic.Perms.NOTIFY]
-		});
-		//this.value = this.getDefaultValue();
-		this.value = 1;
-	};
-
-	inherits(VolumeCharacteristic, Characteristic);
-}
 
 /**
  * Custom characteristic for channel
