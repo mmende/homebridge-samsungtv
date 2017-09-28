@@ -89,7 +89,6 @@ SamsungTvAccessory.prototype._getOn = function(callback) {
 	var accessory = this;
 	this.remote.isAlive(function(err) {
 		if (err) {
-			//callback(new Error('TV is offline'));
 			accessory.log.debug('TV is offline: %s', err);
 			callback(null, false);
 		} else {
@@ -114,11 +113,11 @@ SamsungTvAccessory.prototype._setOn = function(on, callback) {
 		});
 	} else {
 		this.remote.send('KEY_POWEROFF', function(err) {
-			if (err) {
+			if (err && accessory.remote.isAvailable) {
 				accessory.log.debug('Could not turn TV off: %s', err);
 				callback(new Error(err));
 			} else {
-				accessory.log.debug('TV successfully turnen off');
+				accessory.log.debug('TV successfully turned off');
 				callback(null);
 			}
 		});
