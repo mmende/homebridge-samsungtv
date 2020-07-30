@@ -1,4 +1,8 @@
-#Homebridge-samsungtv
+# Note
+
+This repository is deprecated. The plugin has been reimplemented completely and supports newer Samsung TV's as well now. You can find the new repository [here](https://github.com/mmende/homebridge-samsungtv-control2).
+
+# Homebridge-samsungtv
 
 Samsung TV plugin for [Homebridge](https://github.com/nfarina/homebridge)
 
