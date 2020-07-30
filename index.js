@@ -39,6 +39,7 @@ function SamsungTvAccessory(log, config) {
 	this.name = config["name"];
 	this.ip_address = config["ip_address"];
 	this.send_delay = config["send_delay"] || 400;
+	this.alive_ttl = config["alive_ttl"] || 90;
 
 	if (!this.ip_address) throw new Error("You must provide a config value for 'ip_address'.");
 
@@ -92,8 +93,23 @@ SamsungTvAccessory.prototype.getServices = function() {
 
 SamsungTvAccessory.prototype._getOn = function(callback) {
 	var accessory = this;
-	var cb = DisposableCallback(callback)
+	var cb = DisposableCallback(callback);
+
+	var timer = setTimeout(function() {
+        accessory.log.debug('TV is offline with TTL');
+        cb(null, false);
+        timer = null;
+	}, this.alive_ttl);
+
 	this.remote.isAlive(function(err) {
+
+	    if (!timer) {
+	        return;
+        }
+
+        clearTimeout(timer);
+	    timer = null;
+
 		if (err) {
 			accessory.log.debug('TV is offline: %s', err);
 			cb(null, false);
@@ -238,7 +254,7 @@ SamsungTvAccessory.prototype._setChannel = function(channel, callback) {
 					accessory.log.error('Could not send channel key %s: %s', keys[index], err);
 					return;
 				}
-				
+
 				// Send the next key after the specified delay
 				setTimeout(function() {
 					sendKey(++index)
